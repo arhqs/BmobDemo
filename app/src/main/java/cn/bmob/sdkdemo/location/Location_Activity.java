@@ -12,7 +12,6 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.TextView;
 
 import com.amap.api.location.AMapLocation;
-
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationClientOption.AMapLocationMode;
@@ -21,6 +20,9 @@ import com.amap.api.location.AMapLocationListener;
 
 import cn.bmob.sdkdemo.CheckPermissionsActivity;
 import cn.bmob.sdkdemo.R;
+import cn.bmob.sdkdemo.bean.OutPerson;
+import cn.bmob.v3.exception.BmobException;
+import cn.bmob.v3.listener.SaveListener;
 
 import static cn.bmob.sdkdemo.location.Utils.formatUTC;
 
@@ -50,6 +52,13 @@ public class Location_Activity extends CheckPermissionsActivity
 	private Button btLocation;
 	private EditText etAddress;
 	private EditText etDate;
+	private EditText etName;
+	private Button btSignUp;
+	private EditText etLongitude;
+	private EditText etLatitude;
+	public long date1;
+
+
 
 	private AMapLocationClient locationClient = null;
 	private AMapLocationClientOption locationOption = new AMapLocationClientOption();
@@ -65,6 +74,9 @@ public class Location_Activity extends CheckPermissionsActivity
 		
 		//初始化定位
 		initLocation();
+
+
+
 	}
 	
 	//初始化控件
@@ -83,9 +95,17 @@ public class Location_Activity extends CheckPermissionsActivity
 
 		tvResult = (TextView) findViewById(R.id.tv_result);
 		btLocation = (Button) findViewById(R.id.bt_location);
-		
+
+		btSignUp = (Button) findViewById(R.id.bt_signUp);
+		etName = (EditText) findViewById(R.id.et_name);
+		etLongitude = (EditText) findViewById(R.id.et_longitude);
+		etLatitude = (EditText) findViewById(R.id.et_latitude);
+
 		rgLocationMode.setOnCheckedChangeListener(this);
 		btLocation.setOnClickListener(this);
+		btSignUp.setOnClickListener(this);
+
+
 	}
 	
 	@Override
@@ -133,7 +153,42 @@ public class Location_Activity extends CheckPermissionsActivity
 
 	@Override
 	public void onClick(View v) {
-		if (v.getId() == R.id.bt_location) {
+		switch (v.getId()){
+			case R.id.bt_signUp:
+				OutPerson outPerson=new OutPerson();
+				outPerson.setName(etName.getText().toString());
+				outPerson.setLongitude(Double.valueOf(etLongitude.getText().toString()));
+				outPerson.setLatitude(Double.valueOf(etLatitude.getText().toString()));
+				outPerson.setDate(date1);
+				outPerson.save(new SaveListener<String>() {
+					@Override
+					public void done(String s, BmobException e) {
+						if (e==null) tvResult.setText("OK");
+					}
+				});
+
+				break;
+
+			case R.id.bt_location:
+				if (btLocation.getText().equals(
+						getResources().getString(R.string.startLocation))) {
+					setViewEnable(false);
+					btLocation.setText(getResources().getString(
+							R.string.stopLocation));
+					tvResult.setText("正在定位...");
+					startLocation();
+				} else {
+					setViewEnable(true);
+					btLocation.setText(getResources().getString(
+							R.string.startLocation));
+					stopLocation();
+					tvResult.setText("定位停止");
+				}
+				break;
+
+		}
+
+		/*if (v.getId() == R.id.bt_location) {
 			if (btLocation.getText().equals(
 					getResources().getString(R.string.startLocation))) {
 				setViewEnable(false);
@@ -148,7 +203,7 @@ public class Location_Activity extends CheckPermissionsActivity
 				stopLocation();
 				tvResult.setText("定位停止");
 			}
-		}
+		}*/
 	}
 
 //	@Override
@@ -224,14 +279,15 @@ public class Location_Activity extends CheckPermissionsActivity
 				String result = Utils.getLocationStr(loc);
 //				tvResult.setText(result);
 
-				EditText etLongitude = (EditText) findViewById(R.id.et_longitude);
-				EditText etLatitude = (EditText) findViewById(R.id.et_latitude);
+
 				etDate= (EditText) findViewById(R.id.et_date);
 				etAddress= (EditText) findViewById(R.id.et_address);
 				etLatitude.setText(String.valueOf(loc.getLatitude()));
 				etLongitude.setText(String.valueOf(loc.getLongitude()));
 				etDate.setText(formatUTC(loc.getTime(), "yyyy-MM-dd HH:mm:ss"));
 				etAddress.setText(loc.getAddress());
+				date1=loc.getTime();
+
 			} else {
 				tvResult.setText("定位失败，loc is null");
 			}
